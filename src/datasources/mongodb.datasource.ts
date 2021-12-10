@@ -1,10 +1,11 @@
 import {inject, lifeCycleObserver, LifeCycleObserver} from '@loopback/core';
 import {juggler} from '@loopback/repository';
 
+
 const config = {
   name: 'mongodb',
   connector: 'mongodb',
-  url: 'mongodb+srv://pro_web:w3tthsmCHUjCHQw@clusterbookapp.71ei1.mongodb.net/easyRentdb?retryWrites=true&w=majority',
+  url: `mongodb+srv://pro_web:${ process.env.MONGO_PASS }@clusterbookapp.71ei1.mongodb.net/easyRentdb?retryWrites=true&w=majority`,
   host: '',
   port: 0,
   user: '',

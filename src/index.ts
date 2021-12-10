@@ -1,4 +1,5 @@
 import {ApplicationConfig, EasyRentApplication} from './application';
+require('dotenv').config();
 
 export * from './application';
 
