@@ -28,5 +28,11 @@
   "eslint.validate": [
     "javascript",
     "typescript"
+  ],
+  "cSpell.words": [
+    "Autenticacion",
+    "Cliente",
+    "clientes",
+    "servicio"
   ]
 }

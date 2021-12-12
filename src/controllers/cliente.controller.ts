@@ -1,30 +1,58 @@
+import {service} from '@loopback/core';
 import {
   Count,
   CountSchema,
   Filter,
   FilterExcludingWhere,
   repository,
-  Where,
+  Where
 } from '@loopback/repository';
 import {
-  post,
-  param,
-  get,
-  getModelSchemaRef,
-  patch,
-  put,
-  del,
-  requestBody,
-  response,
+  del, get,
+  getModelSchemaRef, HttpErrors, param, patch, post, put, requestBody,
+  response
 } from '@loopback/rest';
-import {Cliente} from '../models';
+import {Cliente, Credenciales} from '../models';
 import {ClienteRepository} from '../repositories';
+import {AutenticacionService} from '../services';
+
 
 export class ClienteController {
   constructor(
     @repository(ClienteRepository)
     public clienteRepository : ClienteRepository,
+    @service(AutenticacionService)
+    public servicioAutenticacion : AutenticacionService
   ) {}
+
+
+  @post('/identificarCliente', {
+    responses: {
+      '200': {
+        description: "Identificacion de cliente"
+      }
+    }
+  })
+  async identificarCliente(
+    @requestBody() credenciales: Credenciales
+  ) {
+    const clientePerson = await this.servicioAutenticacion.identificarCliente(credenciales.correo, credenciales.clave);
+
+    if (clientePerson) {
+      const token = this.servicioAutenticacion.generarTokenJWTCliente(clientePerson);
+
+      return {
+        datos: {
+          nombre: clientePerson.nombre,
+          correoElectronico: clientePerson.correoElectronico,
+          id: clientePerson.id
+        },
+        tk: token
+      }
+    } else {
+      throw new HttpErrors[401]("Datos invalidos");
+    }
+  }
 
   @post('/clientes')
   @response(200, {
@@ -44,7 +72,14 @@ export class ClienteController {
     })
     cliente: Omit<Cliente, 'id'>,
   ): Promise<Cliente> {
-    return this.clienteRepository.create(cliente);
+
+    const claveCifrada = this.servicioAutenticacion.cifrarClave(cliente.clave);
+
+    cliente.clave = claveCifrada;
+
+    const client = await this.clienteRepository.create(cliente);
+
+    return client;
   }
 
   @get('/clientes/count')

@@ -1,30 +1,61 @@
+import {service} from '@loopback/core';
 import {
   Count,
   CountSchema,
   Filter,
   FilterExcludingWhere,
   repository,
-  Where,
+  Where
 } from '@loopback/repository';
 import {
-  post,
-  param,
-  get,
-  getModelSchemaRef,
-  patch,
-  put,
-  del,
-  requestBody,
-  response,
+  del, get,
+  getModelSchemaRef, HttpErrors, param, patch, post, put, requestBody,
+  response
 } from '@loopback/rest';
-import {Asesor} from '../models';
+import {Llaves} from '../config/llaves';
+import {Asesor, Credenciales} from '../models';
 import {AsesorRepository} from '../repositories';
+import {AutenticacionService} from '../services';
+
+const fetch = require('node-fetch');
 
 export class AsesorController {
   constructor(
     @repository(AsesorRepository)
     public asesorRepository : AsesorRepository,
+    @service(AutenticacionService)
+    public servicioAutenticacion : AutenticacionService
   ) {}
+
+
+  @post('/identificarAsesor', {
+    responses: {
+      '200': {
+        description: "Identificacion de asesor"
+      }
+    }
+  })
+  async identificarAsesor(
+    @requestBody() credenciales: Credenciales
+  ) {
+    const asesorPerson = await this.servicioAutenticacion.identificarAsesor(credenciales.correo, credenciales.clave);
+
+    if (asesorPerson) {
+      const token = this.servicioAutenticacion.generarTokenJWTAsesor(asesorPerson);
+
+      return {
+        datos: {
+          nombre: asesorPerson.nombre,
+          correoElectronico: asesorPerson.correoElectronico,
+          id: asesorPerson.id
+        },
+        tk: token
+      }
+    } else {
+      throw new HttpErrors[401]("Datos invalidos");
+    }
+  }
+
 
   @post('/asesores')
   @response(200, {
@@ -44,7 +75,31 @@ export class AsesorController {
     })
     asesor: Omit<Asesor, 'id'>,
   ): Promise<Asesor> {
-    return this.asesorRepository.create(asesor);
+
+    const clave = this.servicioAutenticacion.generarClave();
+    const claveCifrada = this.servicioAutenticacion.cifrarClave(clave);
+
+    asesor.clave = claveCifrada;
+    asesor.aceptacion = false;
+
+    const newAsesor = await this.asesorRepository.create(asesor);
+
+    // Notificar al asesor
+
+    /*
+      Instalamos el paquete node-fetch (npm install node-fetch@2)
+    */
+
+    const emailDestino = asesor.correoElectronico;
+    const asunto = 'Bienvenido a Easy Rent';
+    const mensaje = `Hola <strong>${ asesor.nombre } ${ asesor.apellido }</strong>, su nombre de usuario es: ${ asesor.correoElectronico } y su contraseña es: ${ clave }`;
+
+    fetch(`${ Llaves.urlServicioNotificaciones }/email?emailDestino=${ emailDestino }&asunto=${ asunto }&mensaje=${ mensaje }`)
+      .then((res: unknown) => console.log(res))
+      .catch((err: unknown) => console.log(err));
+
+    return newAsesor;
+
   }
 
   @get('/asesores/count')

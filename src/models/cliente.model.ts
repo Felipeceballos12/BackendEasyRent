@@ -1,4 +1,4 @@
-import {Entity, model, property, belongsTo, hasMany} from '@loopback/repository';
+import {belongsTo, Entity, hasMany, model, property} from '@loopback/repository';
 import {Ciudad} from './ciudad.model';
 import {Solicitud} from './solicitud.model';
 
@@ -61,7 +61,7 @@ export class Cliente extends Entity {
 
   @property({
     type: 'string',
-    required: true,
+    required: false,
   })
   clave: string;
 

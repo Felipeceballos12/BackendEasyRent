@@ -8,3 +8,4 @@ export * from './tipo-vehiculo.model';
 export * from './sugerencia.model';
 export * from './vehiculo.model';
 export * from './solicitud.model';
+export * from './credenciales.model';

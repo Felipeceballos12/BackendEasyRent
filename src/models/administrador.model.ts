@@ -1,8 +1,8 @@
-import {Entity, model, property, belongsTo, hasMany} from '@loopback/repository';
-import {Ciudad} from './ciudad.model';
-import {TipoVehiculo} from './tipo-vehiculo.model';
-import {Sugerencia} from './sugerencia.model';
+import {belongsTo, Entity, hasMany, model, property} from '@loopback/repository';
 import {Asesor} from './asesor.model';
+import {Ciudad} from './ciudad.model';
+import {Sugerencia} from './sugerencia.model';
+import {TipoVehiculo} from './tipo-vehiculo.model';
 
 @model()
 export class Administrador extends Entity {
@@ -63,7 +63,7 @@ export class Administrador extends Entity {
 
   @property({
     type: 'string',
-    required: true,
+    required: false,
   })
   clave: string;
 
